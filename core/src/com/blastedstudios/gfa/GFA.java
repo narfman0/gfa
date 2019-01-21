@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.loader.ObjLoader;
 import com.badlogic.gdx.graphics.g3d.utils.CameraInputController;
+import com.badlogic.gdx.math.Vector;
 import com.badlogic.gdx.math.Vector3;
 
 public class GFA extends ApplicationAdapter {
@@ -22,10 +23,10 @@ public class GFA extends ApplicationAdapter {
 	public ModelBatch modelBatch;
 	ModelInstance instance;
 	Model model;
-	
+
 	@Override
 	public void create () {
-		camera = createCamera();
+		initCamera();
 		modelBatch = new ModelBatch();
 		cameraController = new CameraInputController(camera);
 		Gdx.input.setInputProcessor(cameraController);
@@ -37,33 +38,7 @@ public class GFA extends ApplicationAdapter {
 		ModelLoader loader = new ObjLoader();
 		model = loader.loadModel(Gdx.files.internal("ship/ship.obj"));
 		instance = new ModelInstance(model);
-
-		texture = new Texture(Gdx.files.internal("grass.jpg"));
-
-		Pixmap data = new Pixmap(Gdx.files.internal("heightmap.png"));
-		field = new HeightField(true, data, true,
-				VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal | VertexAttributes.Usage.ColorUnpacked | VertexAttributes.Usage.TextureCoordinates);
-		data.dispose();
-		field.corner00.set(-10f, 0, -10f);
-		field.corner10.set(10f, 0, -10f);
-		field.corner01.set(-10f, 0, 10f);
-		field.corner11.set(10f, 0, 10f);
-		field.color00.set(0, 0, 1, 1);
-		field.color01.set(0, 1, 1, 1);
-		field.color10.set(1, 0, 1, 1);
-		field.color11.set(1, 1, 1, 1);
-		field.magnitude.set(0f, 5f, 0f);
-		field.update();
-
-
-		ground = new Renderable();
-		ground.environment = environment;
-		ground.meshPart.mesh = field.mesh;
-		ground.meshPart.primitiveType = GL20.GL_TRIANGLES;
-		ground.meshPart.offset = 0;
-		ground.meshPart.size = field.mesh.getNumIndices();
-		ground.meshPart.update();
-		ground.material = new Material(TextureAttribute.createDiffuse(texture));
+		initHeightmap();
 	}
 
 	@Override
@@ -96,15 +71,43 @@ public class GFA extends ApplicationAdapter {
 		camera.update();
 	}
 
-	public static Camera createCamera(){
-		Camera camera = new PerspectiveCamera(67, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-		camera.near = 1f;
+	void initCamera(){
+		camera = new PerspectiveCamera(67, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+		camera.near = .1f;
 		camera.far = 300f;
 		camera.update();
 		camera.translate(0, 1, -2);
 		camera.direction.set(0, 0, 1);
 		camera.update();
-		return camera;
+	}
+
+	void initHeightmap(){
+		texture = new Texture(Gdx.files.internal("grass.jpg"));
+
+		Pixmap data = new Pixmap(Gdx.files.internal("heightmap.png"));
+		field = new HeightField(true, data, true,
+				VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal | VertexAttributes.Usage.ColorUnpacked | VertexAttributes.Usage.TextureCoordinates);
+		data.dispose();
+		field.corner00.set(-10f, 0, -10f);
+		field.corner10.set(10f, 0, -10f);
+		field.corner01.set(-10f, 0, 10f);
+		field.corner11.set(10f, 0, 10f);
+		field.color00.set(0, 0, 1, 1);
+		field.color01.set(0, 1, 1, 1);
+		field.color10.set(1, 0, 1, 1);
+		field.color11.set(1, 1, 1, 1);
+		field.magnitude.set(0f, 5f, 0f);
+		field.update();
+
+
+		ground = new Renderable();
+		ground.environment = environment;
+		ground.meshPart.mesh = field.mesh;
+		ground.meshPart.primitiveType = GL20.GL_TRIANGLES;
+		ground.meshPart.offset = 0;
+		ground.meshPart.size = field.mesh.getNumIndices();
+		ground.meshPart.update();
+		ground.material = new Material(TextureAttribute.createDiffuse(texture));
 	}
 
 	@Override
