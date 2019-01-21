@@ -5,6 +5,7 @@ import com.badlogic.gdx.assets.loaders.ModelLoader;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.*;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
+import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.loader.ObjLoader;
 import com.badlogic.gdx.graphics.g3d.utils.CameraInputController;
@@ -13,10 +14,11 @@ import com.badlogic.gdx.math.Vector3;
 public class GFA extends ApplicationAdapter {
 	private Environment environment;
 	private Camera camera;
+	private Texture texture;
 	HeightField field;
 	Renderable ground;
 	public CameraInputController cameraController;
-	public static final float MOVE_SPEED = 10f, TURN_RATE = 100f;
+	public static final float TURN_RATE = 100f;
 	public ModelBatch modelBatch;
 	ModelInstance instance;
 	Model model;
@@ -36,9 +38,32 @@ public class GFA extends ApplicationAdapter {
 		model = loader.loadModel(Gdx.files.internal("ship/ship.obj"));
 		instance = new ModelInstance(model);
 
-//		Pixmap data = new Pixmap(Gdx.files.internal("data/g3d/heightmap.png"));
-//		field = new HeightField(true, data, true,
-//				VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal | VertexAttributes.Usage.ColorUnpacked | VertexAttributes.Usage.TextureCoordinates);
+		texture = new Texture(Gdx.files.internal("grass.jpg"));
+
+		Pixmap data = new Pixmap(Gdx.files.internal("heightmap.png"));
+		field = new HeightField(true, data, true,
+				VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal | VertexAttributes.Usage.ColorUnpacked | VertexAttributes.Usage.TextureCoordinates);
+		data.dispose();
+		field.corner00.set(-10f, 0, -10f);
+		field.corner10.set(10f, 0, -10f);
+		field.corner01.set(-10f, 0, 10f);
+		field.corner11.set(10f, 0, 10f);
+		field.color00.set(0, 0, 1, 1);
+		field.color01.set(0, 1, 1, 1);
+		field.color10.set(1, 0, 1, 1);
+		field.color11.set(1, 1, 1, 1);
+		field.magnitude.set(0f, 5f, 0f);
+		field.update();
+
+
+		ground = new Renderable();
+		ground.environment = environment;
+		ground.meshPart.mesh = field.mesh;
+		ground.meshPart.primitiveType = GL20.GL_TRIANGLES;
+		ground.meshPart.offset = 0;
+		ground.meshPart.size = field.mesh.getNumIndices();
+		ground.meshPart.update();
+		ground.material = new Material(TextureAttribute.createDiffuse(texture));
 	}
 
 	@Override
@@ -49,6 +74,7 @@ public class GFA extends ApplicationAdapter {
 
 		modelBatch.begin(camera);
 		modelBatch.render(instance, environment);
+		modelBatch.render(ground);
 		modelBatch.end();
 	}
 
@@ -58,6 +84,10 @@ public class GFA extends ApplicationAdapter {
 			movement.add(camera.direction.cpy().scl(dt));
 		if (Gdx.input.isKeyPressed(Input.Keys.S))
 			movement.add(camera.direction.cpy().scl(-dt));
+		if (Gdx.input.isKeyPressed(Input.Keys.Q))
+			movement.add(new Vector3(0, 1, 0).scl(dt));
+		if (Gdx.input.isKeyPressed(Input.Keys.E))
+			movement.add(new Vector3(0, 1, 0).scl(-dt));
 		camera.translate(movement);
 		if (Gdx.input.isKeyPressed(Input.Keys.A))
 			camera.rotate(TURN_RATE * dt, 0, 1, 0);
@@ -75,5 +105,14 @@ public class GFA extends ApplicationAdapter {
 		camera.direction.set(0, 0, 1);
 		camera.update();
 		return camera;
+	}
+
+	@Override
+	public void dispose () {
+		super.dispose();
+		texture.dispose();
+		field.dispose();
+		model.dispose();
+		modelBatch.dispose();
 	}
 }
